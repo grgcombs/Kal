@@ -141,11 +141,17 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 {
 	KalLogic *theLogic = [KalLogic sharedLogic];
 	NSArray *markedDates = [theDataSource markedDatesFrom:theLogic.fromDate to:theLogic.toDate];
-	NSMutableArray *dates = [[markedDates mutableCopy] autorelease];
-	for (int i=0; i<[dates count]; i++)
-		[dates replaceObjectAtIndex:i withObject:[KalDate dateFromNSDate:[dates objectAtIndex:i]]];
+	NSMutableArray *dates = [markedDates mutableCopy];
+
+
+	for (int i=0; i<[markedDates count]; i++)
+    {
+        NSDate *date = dates[i];
+        dates[i] = [KalDate dateFromNSDate:date];
+    }
 	
 	[self.calendarView markTilesForDates:dates];
+    [dates release];
 	[self didSelectDate:self.calendarView.selectedDate];
 }
 
@@ -236,6 +242,8 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 		[tableView release];
 	}
 	self.calendarView = nil;	
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationSignificantTimeChangeNotification object:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:KalDataSourceChangedNotification object:nil];
 	[super dealloc];
 }
 

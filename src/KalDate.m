@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2009 Keith Lazuka
  * License: http://www.opensource.org/licenses/mit-license.html
  */
@@ -18,65 +18,64 @@ static KalDate *today;
 
 + (void)initialize
 {
-  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheTodaysDate) name:UIApplicationSignificantTimeChangeNotification object:nil];
-  [self cacheTodaysDate];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheTodaysDate) name:UIApplicationSignificantTimeChangeNotification object:nil];
+    [self cacheTodaysDate];
 }
 
 + (void)cacheTodaysDate
 {
-  [today release];
-  today = [[KalDate dateFromNSDate:[NSDate date]] retain];
+    [today release];
+    today = [[KalDate dateFromNSDate:[NSDate date]] retain];
 }
 
-+ (KalDate *)dateForDay:(unsigned int)day month:(unsigned int)month year:(unsigned int)year
++ (KalDate *)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
 {
-  return [[[KalDate alloc] initForDay:day month:month year:year] autorelease];
+    return [[[KalDate alloc] initForDay:day month:month year:year] autorelease];
 }
 
 + (KalDate *)dateFromNSDate:(NSDate *)date
 {
 	if (!date || [[NSNull null] isEqual:date])
 		date = [NSDate date];
-  NSDateComponents *parts = [date cc_componentsForMonthDayAndYear];
-  return [KalDate dateForDay:[parts day] month:[parts month] year:[parts year]];
+    NSDateComponents *parts = [date cc_componentsForMonthDayAndYear];
+    KalDate *kalDate = [KalDate dateForDay:[parts day] month:[parts month] year:[parts year]];
+    kalDate.date = date;
+    return kalDate;
 }
 
-- (id)initForDay:(unsigned int)day month:(unsigned int)month year:(unsigned int)year
+- (id)initForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
 {
-  if ((self = [super init])) {
-    a.day = day;
-    a.month = month;
-    a.year = year;
-  }
-  return self;
+    if ((self = [super init])) {
+        _day = day;
+        _month = month;
+        _year = year;
+    }
+    return self;
 }
-
-- (unsigned int)day { return a.day; }
-- (unsigned int)month { return a.month; }
-- (unsigned int)year { return a.year; }
 
 - (NSDate *)NSDate
 {
-  NSDateComponents *c = [[[NSDateComponents alloc] init] autorelease];
-  c.day = a.day;
-  c.month = a.month;
-  c.year = a.year;
-  return [[NSCalendar currentCalendar] dateFromComponents:c];
+    if (!_date)
+    {
+        NSDateComponents *c = [[NSDateComponents alloc] init];
+        c.day = _day;
+        c.month = _month;
+        c.year = _year;
+        _date = [[[NSCalendar currentCalendar] dateFromComponents:c] retain];
+        [c release];
+    }
+    return _date;
 }
 
 - (BOOL)isToday { return [self isEqual:today]; }
 
 - (NSComparisonResult)compare:(KalDate *)otherDate
 {
-  NSInteger selfComposite = a.year*10000 + a.month*100 + a.day;
-  NSInteger otherComposite = [otherDate year]*10000 + [otherDate month]*100 + [otherDate day];
-  
-  if (selfComposite < otherComposite)
-    return NSOrderedAscending;
-  else if (selfComposite == otherComposite)
-    return NSOrderedSame;
-  else
-    return NSOrderedDescending;
+    if (![otherDate isKindOfClass:[KalDate class]])
+    {
+        return NSNotFound;
+    }
+    return [[self NSDate] compare:[otherDate NSDate]];
 }
 
 #pragma mark -
@@ -84,21 +83,21 @@ static KalDate *today;
 
 - (BOOL)isEqual:(id)anObject
 {
-  if (![anObject isKindOfClass:[KalDate class]])
-    return NO;
-  
-  KalDate *d = (KalDate*)anObject;
-  return a.day == [d day] && a.month == [d month] && a.year == [d year];
+    if (![anObject isKindOfClass:[KalDate class]])
+        return NO;
+
+    KalDate *d = (KalDate*)anObject;
+    return [[d NSDate] isEqual:[self NSDate]];
 }
 
 - (NSUInteger)hash
 {
-  return a.day;
+    return [[self NSDate] hash];
 }
 
 - (NSString *)description
 {
-  return [NSString stringWithFormat:@"%u/%u/%u", a.month, a.day, a.year];
+    return [[self NSDate] description];
 }
 
 @end

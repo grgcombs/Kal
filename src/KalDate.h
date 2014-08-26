@@ -6,21 +6,17 @@
 #import <Foundation/Foundation.h>
 
 @interface KalDate : NSObject
-{
-  struct {
-    unsigned int month : 4;
-    unsigned int day : 5;
-    unsigned int year : 15;
-  } a;
-}
 
-+ (KalDate *)dateForDay:(unsigned int)day month:(unsigned int)month year:(unsigned int)year;
+@property (nonatomic,assign) NSInteger month;
+@property (nonatomic,assign) NSInteger day;
+@property (nonatomic,assign) NSInteger year;
+@property (nonatomic,strong) NSDate *date;
+
+
++ (KalDate *)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year;
 + (KalDate *)dateFromNSDate:(NSDate *)date;
 
-- (id)initForDay:(unsigned int)day month:(unsigned int)month year:(unsigned int)year;
-- (unsigned int)day;
-- (unsigned int)month;
-- (unsigned int)year;
+- (id)initForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year;
 - (NSDate *)NSDate;
 - (NSComparisonResult)compare:(KalDate *)otherDate;
 - (BOOL)isToday;

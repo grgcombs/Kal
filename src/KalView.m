@@ -8,6 +8,7 @@
 #import "KalLogic.h"
 #import "KalPrivate.h"
 #import "KalDate.h"
+#import "UtilityMethods.h"
 
 @interface KalView ()
 - (void)addSubviewsToHeaderView:(UIView *)headerView;
@@ -20,7 +21,7 @@ static const CGFloat kMonthLabelHeight = 17.f;
 
 @implementation KalView
 
-@synthesize delegate, tableView, shadowView, gridView;
+@synthesize delegate, tableView, gridView;
 
 /*
  - (id)initWithCoder:(NSCoder *)aDecoder { 
@@ -47,7 +48,9 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	[self addSubview:headerView];
 	
 	UIView *contentView = [[[UIView alloc] initWithFrame:CGRectMake(0.f, kHeaderHeight, frameWidth, frameHeight)] autorelease];
-	contentView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
+    if (![UtilityMethods isIPadDevice]) {
+        contentView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
+    }
 	[self addSubviewsToContentView:contentView];
 	[self addSubview:contentView];		
 }
@@ -134,10 +137,9 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	headerTitleLabel = [[UILabel alloc] initWithFrame:monthLabelFrame];
 	headerTitleLabel.backgroundColor = [UIColor clearColor];
 	headerTitleLabel.font = [UIFont boldSystemFontOfSize:22.f];
-	headerTitleLabel.textAlignment = UITextAlignmentCenter;
+	headerTitleLabel.textAlignment = NSTextAlignmentCenter;
 	headerTitleLabel.textColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"Kal.bundle/kal_header_text_fill.png"]];
-	headerTitleLabel.shadowColor = [UIColor whiteColor];
-	headerTitleLabel.shadowOffset = CGSizeMake(0.f, 1.f);
+
 	[self setHeaderTitleText:[[KalLogic sharedLogic] selectedMonthNameAndYear]];
 	[theHeader addSubview:headerTitleLabel];
 	
@@ -163,10 +165,8 @@ static const CGFloat kMonthLabelHeight = 17.f;
 		UILabel *weekdayLabel = [[UILabel alloc] initWithFrame:weekdayFrame];
 		weekdayLabel.backgroundColor = [UIColor clearColor];
 		weekdayLabel.font = [UIFont boldSystemFontOfSize:10.f];
-		weekdayLabel.textAlignment = UITextAlignmentCenter;
+		weekdayLabel.textAlignment = NSTextAlignmentCenter;
 		weekdayLabel.textColor = [UIColor colorWithRed:0.3f green:0.3f blue:0.3f alpha:1.f];
-		weekdayLabel.shadowColor = [UIColor whiteColor];
-		weekdayLabel.shadowOffset = CGSizeMake(0.f, 1.f);
 		weekdayLabel.text = [weekdayNames objectAtIndex:i];
 		[theHeader addSubview:weekdayLabel];
 		[weekdayLabel release];
@@ -191,15 +191,7 @@ static const CGFloat kMonthLabelHeight = 17.f;
 		self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 		[contentView addSubview:self.tableView];
 	}
-	
-	// Drop shadow below tile grid and over the list of events for the selected day
-	if (!self.shadowView) {
-		self.shadowView = [[[UIImageView alloc] initWithFrame:fullWidthAutomaticLayoutFrame] autorelease];
-		self.shadowView.image = [UIImage imageNamed:@"Kal.bundle/kal_grid_shadow.png"];
-		self.shadowView.height = shadowView.image.size.height;
-		[contentView addSubview:self.shadowView];
-	}
-	
+
 	// Trigger the initial KVO update to finish the contentView layout
 	[gridView sizeToFit];
 }
@@ -218,16 +210,12 @@ static const CGFloat kMonthLabelHeight = 17.f;
 		 * tableView here, I do not need to wrap it in a
 		 * [UIView beginAnimations:context:].
 		 */
-		if (isIpadDevice()) {
-			self.shadowView.height = kHeaderHeight + gridView.top + gridView.height;
-		}
-		else {
+		if (!isIpadDevice()) {
 			CGFloat gridBottom = gridView.top + gridView.height;
 			CGRect frame = self.tableView.frame;
 			frame.origin.y = gridBottom;
 			frame.size.height = tableView.superview.height - gridBottom;
 			self.tableView.frame = frame;
-			self.shadowView.top = gridBottom;
 		}
 		
 	} else if ([keyPath isEqualToString:@"selectedMonthNameAndYear"]) {
@@ -265,7 +253,6 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	[headerTitleLabel release];
 	[gridView release];
 	self.tableView = nil;
-	self.shadowView = nil;
 	[super dealloc];
 }
 
