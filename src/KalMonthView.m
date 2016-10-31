@@ -18,8 +18,6 @@ extern const CGSize kTileSize;
 
 @implementation KalMonthView
 
-@synthesize numWeeks;
-
 - (id)initWithFrame:(CGRect)frame
 {
     if ((self = [super initWithFrame:frame])) {
@@ -27,8 +25,10 @@ extern const CGSize kTileSize;
         self.clipsToBounds = YES;
         UInt16 tileIndex = 0;
         NSMutableArray *tiles = [[NSMutableArray alloc] init];
-        for (int i=0; i<6; i++) {
-            for (int j=0; j<7; j++) {
+        for (int i=0; i<6; i++)
+        {
+            for (int j=0; j<7; j++)
+            {
                 CGRect r = CGRectMake(j*kTileSize.width, i*kTileSize.height, kTileSize.width, kTileSize.height);
                 KalTileView *tileView = [[KalTileView alloc] initWithFrame:r];
                 tileView.tileIndex = tileIndex;
@@ -60,19 +60,37 @@ extern const CGSize kTileSize;
 - (void)showDates:(NSArray *)mainDates leadingAdjacentDates:(NSArray *)leadingAdjacentDates trailingAdjacentDates:(NSArray *)trailingAdjacentDates
 {
     UInt16 tileNum = 0;
-    NSArray *dates[] = { leadingAdjacentDates, mainDates, trailingAdjacentDates };
+    if (!leadingAdjacentDates)
+        leadingAdjacentDates = @[];
+    if (!mainDates)
+        mainDates = @[];
+    if (!trailingAdjacentDates)
+        trailingAdjacentDates = @[];
 
-    for (int i=0; i<3; i++) {
-        for (KalDate *d in dates[i]) {
+    NSArray *dateGroups = @[leadingAdjacentDates, mainDates, trailingAdjacentDates];
+    for (UInt8 groupIndex = 0; groupIndex < dateGroups.count; groupIndex++)
+    {
+        NSArray *dateGroup = dateGroups[groupIndex];
+        BOOL isMainGroup = (groupIndex == 1);
+
+        for (KalDate *date in dateGroup)
+        {
             KalTileView *tile = [self tileForIndex:tileNum];
             [tile resetState];
-            tile.date = d;
-            tile.type = ((dates[i] != mainDates) ? KalTileTypeAdjacent : [d isToday]) ? KalTileTypeToday : KalTileTypeRegular;
+            tile.date = date;
+
+            if (!isMainGroup)
+                tile.type = KalTileTypeAdjacent;
+            else if ([date isToday])
+                tile.type = KalTileTypeToday;
+            else
+                tile.type = KalTileTypeRegular;
+
             tileNum++;
         }
     }
 
-    numWeeks = ceilf(tileNum / 7.f);
+    _numWeeks = ceilf(tileNum / 7.f);
     [self sizeToFit];
     [self setNeedsDisplay];
 }
@@ -81,14 +99,18 @@ extern const CGSize kTileSize;
 {
     [super drawRect:rect];
     CGContextRef ctx = UIGraphicsGetCurrentContext();
-    CGContextDrawTiledImage(ctx, (CGRect){CGPointZero,kTileSize}, [[UIImage imageNamed:@"Kal.bundle/kal_tile.png"] CGImage]);
+    UIImage *image = [UIImage imageNamed:@"Kal.bundle/kal_tile.png"];
+    if (image)
+        CGContextDrawTiledImage(ctx, (CGRect){CGPointZero,kTileSize}, [image CGImage]);
 }
 
 - (KalTileView *)firstTileOfMonth
 {
     KalTileView *tile = nil;
-    for (KalTileView *t in self.tiles) {
-        if (!t.belongsToAdjacentMonth) {
+    for (KalTileView *t in self.tiles)
+    {
+        if (!t.belongsToAdjacentMonth)
+        {
             tile = t;
             break;
         }
@@ -97,30 +119,46 @@ extern const CGSize kTileSize;
     return tile;
 }
 
-- (KalTileView *)tileForDate:(KalDate *)date
+- (KalTileView *)tileForDate:(KalDate *)kalDate
 {
+    if (!kalDate || !self.tiles.count)
+        return nil;
+    NSDate *dateToFind = [kalDate NSDate];
+    if (!dateToFind)
+        return nil;
+
     KalTileView *tile = nil;
-    for (KalTileView *t in self.tiles) {
-        if ([t.date isEqual:date]) {
+    NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
+
+    for (KalTileView *t in self.tiles)
+    {
+        NSDate *tileDate = [t.date NSDate];
+        if (!tileDate)
+            continue;
+        if ([calendar isDate:tileDate inSameDayAsDate:dateToFind])
+        {
             tile = t;
             break;
         }
     }
+
     if (!tile)
-        NSLog(@"Failed to find corresponding tile for date %@", date);
+        NSLog(@"Failed to find corresponding tile for date %@", dateToFind);
 
     return tile;
 }
 
 - (void)sizeToFit
 {
-    self.height = 1.f + kTileSize.height * numWeeks;
+    self.height = 1.f + kTileSize.height * self.numWeeks;
 }
 
 - (void)markTilesForDates:(NSArray *)dates
 {
     for (KalTileView *tile in self.tiles)
+    {
         tile.marked = [dates containsObject:tile.date];
+    }
 }
 
 @end

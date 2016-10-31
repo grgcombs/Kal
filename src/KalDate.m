@@ -6,27 +6,7 @@
 #import "KalDate.h"
 #import "KalPrivate.h"
 
-static KalDate *today;
-
-
-@interface KalDate ()
-+ (void)cacheTodaysDate;
-@end
-
-
 @implementation KalDate
-
-+ (void)initialize
-{
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheTodaysDate) name:UIApplicationSignificantTimeChangeNotification object:nil];
-    [self cacheTodaysDate];
-}
-
-+ (void)cacheTodaysDate
-{
-    [today release];
-    today = [[KalDate dateFromNSDate:[NSDate date]] retain];
-}
 
 + (KalDate *)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
 {
@@ -67,15 +47,24 @@ static KalDate *today;
     return _date;
 }
 
-- (BOOL)isToday { return [self isEqual:today]; }
+- (BOOL)isToday
+{
+    NSDate *date = [self NSDate];
+    if (!date)
+        return NO;
+    return [[NSCalendar autoupdatingCurrentCalendar] isDateInToday:date];
+}
 
 - (NSComparisonResult)compare:(KalDate *)otherDate
 {
-    if (![otherDate isKindOfClass:[KalDate class]])
-    {
+    NSDate *other = nil;
+    if ([otherDate isKindOfClass:[KalDate class]])
+        other = [otherDate NSDate];
+    else if ([otherDate isKindOfClass:[NSDate class]])
+        other = (NSDate *)otherDate;
+    if (!other)
         return NSNotFound;
-    }
-    return [[self NSDate] compare:[otherDate NSDate]];
+    return [[self NSDate] compare:other];
 }
 
 #pragma mark -

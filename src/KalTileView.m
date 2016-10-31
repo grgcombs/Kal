@@ -11,15 +11,13 @@ extern const CGSize kTileSize;
 
 @implementation KalTileView
 
-@synthesize date;
-
 - (id)initWithFrame:(CGRect)frame
 {
     if ((self = [super initWithFrame:frame])) {
         self.opaque = YES;
         self.backgroundColor = [UIColor clearColor];
-        self.clipsToBounds = YES;
-        origin = frame.origin;
+        self.clipsToBounds = NO;
+        _origin = frame.origin;
         [self resetState];
     }
     return self;
@@ -28,172 +26,170 @@ extern const CGSize kTileSize;
 - (void)drawRect:(CGRect)rect
 {
     [super drawRect:rect];
+
     CGContextRef ctx = UIGraphicsGetCurrentContext();
-    CGFloat fontSize = 24.f;
-    UIFont *font = [UIFont boldSystemFontOfSize:fontSize];
-    UIColor *shadowColor = nil;
-    UIColor *textColor = nil;
+
+    CGFloat shadowOffset = -1;
+    UIColor *shadowColor = [UIColor blackColor];
+    UIColor *textColor = [UIColor whiteColor];
     UIImage *markerImage = nil;
-    CGContextSelectFont(ctx, [font.fontName cStringUsingEncoding:NSUTF8StringEncoding], fontSize, kCGEncodingMacRoman);
 
-    CGContextTranslateCTM(ctx, 0, kTileSize.height);
-    CGContextScaleCTM(ctx, 1, -1);
+    //CGContextTranslateCTM(ctx, 0, kTileSize.height);
+    //CGContextScaleCTM(ctx, 1, -1);
 
-    if ([self isToday] && self.selected) {
-        [[[UIImage imageNamed:@"Kal.bundle/kal_tile_today_selected.png"] stretchableImageWithLeftCapWidth:6 topCapHeight:0] drawInRect:CGRectMake(0, -1, kTileSize.width+1, kTileSize.height+1)];
-        textColor = [UIColor whiteColor];
-        shadowColor = [UIColor blackColor];
+    CGRect imageRect = CGRectMake(0, -1, kTileSize.width+1, kTileSize.height+1);
+
+    BOOL isToday = self.isToday;
+    BOOL isSelected = self.isSelected;
+    BOOL isAdjacent = self.belongsToAdjacentMonth;
+
+    if (isToday && isSelected)
+    {
+        UIImage *image = [UIImage imageNamed:@"Kal.bundle/kal_tile_today_selected.png"];
+        if (image)
+            [[image stretchableImageWithLeftCapWidth:6 topCapHeight:0] drawInRect:imageRect];
         markerImage = [UIImage imageNamed:@"Kal.bundle/kal_marker_today.png"];
-    } else if ([self isToday] && !self.selected) {
-        [[[UIImage imageNamed:@"Kal.bundle/kal_tile_today.png"] stretchableImageWithLeftCapWidth:6 topCapHeight:0] drawInRect:CGRectMake(0, -1, kTileSize.width+1, kTileSize.height+1)];
-        textColor = [UIColor whiteColor];
-        shadowColor = [UIColor blackColor];
+    }
+    else if (isToday)
+    {
+        UIImage *image = [UIImage imageNamed:@"Kal.bundle/kal_tile_today.png"];
+        if (image)
+            [[image stretchableImageWithLeftCapWidth:6 topCapHeight:0] drawInRect:imageRect];
         markerImage = [UIImage imageNamed:@"Kal.bundle/kal_marker_today.png"];
-    } else if (self.selected) {
-        [[[UIImage imageNamed:@"Kal.bundle/kal_tile_selected.png"] stretchableImageWithLeftCapWidth:1 topCapHeight:0] drawInRect:CGRectMake(0, -1, kTileSize.width+1, kTileSize.height+1)];
-        textColor = [UIColor whiteColor];
-        shadowColor = [UIColor blackColor];
+    }
+    else if (isSelected)
+    {
+        UIImage *image = [UIImage imageNamed:@"Kal.bundle/kal_tile_selected.png"];
+        if (image)
+            [[image stretchableImageWithLeftCapWidth:1 topCapHeight:0] drawInRect:imageRect];
         markerImage = [UIImage imageNamed:@"Kal.bundle/kal_marker_selected.png"];
-    } else if (self.belongsToAdjacentMonth) {
-        textColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"Kal.bundle/kal_tile_dim_text_fill.png"]];
+    }
+    else if (isAdjacent)
+    {
+        UIImage *image = [UIImage imageNamed:@"Kal.bundle/kal_tile_dim_text_fill.png"];
+        if (image)
+            textColor = [UIColor colorWithPatternImage:image];
         shadowColor = nil;
         markerImage = [UIImage imageNamed:@"Kal.bundle/kal_marker_dim.png"];
-    } else {
-        textColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"Kal.bundle/kal_tile_text_fill.png"]];
+    }
+    else
+    {
+        UIImage *image = [UIImage imageNamed:@"Kal.bundle/kal_tile_text_fill.png"];
+        if (image)
+            textColor = [UIColor colorWithPatternImage:image];
         shadowColor = [UIColor whiteColor];
+        shadowOffset = 1;
         markerImage = [UIImage imageNamed:@"Kal.bundle/kal_marker.png"];
     }
 
-    if (flags.marked)
-        [markerImage drawInRect:CGRectMake(21.f, 5.f, 4.f, 5.f)];
+    NSMutableDictionary *attributes = [@{NSFontAttributeName: [UIFont boldSystemFontOfSize:24],
+                                         NSForegroundColorAttributeName: textColor} mutableCopy];
+    if (shadowColor)
+    {
+        NSShadow *shadow = [[NSShadow alloc] init];
+        shadow.shadowColor = shadowColor;
+        shadow.shadowOffset = CGSizeMake(0, shadowOffset);
+
+        attributes[NSShadowAttributeName] = shadow;
+    }
+
+    if (self.isMarked && markerImage)
+        [markerImage drawAtPoint:CGPointMake(21, 1)];
 
     NSInteger n = [self.date day];
     NSString *dayText = [@(n) stringValue];
-    const char *day = [dayText cStringUsingEncoding:NSUTF8StringEncoding];
-    CGSize textSize = [dayText sizeWithFont:font];
-    CGFloat textX, textY;
-    textX = roundf(0.5f * (kTileSize.width - textSize.width));
-    textY = 6.f + roundf(0.5f * (kTileSize.height - textSize.height));
-    if (shadowColor) {
-        [shadowColor setFill];
-        CGContextShowTextAtPoint(ctx, textX, textY, day, n >= 10 ? 2 : 1);
-        textY += 1.f;
-    }
-    [textColor setFill];
-    CGContextShowTextAtPoint(ctx, textX, textY, day, n >= 10 ? 2 : 1);
+    NSAttributedString *string = [[NSAttributedString alloc] initWithString:dayText attributes:attributes];
 
-    if (self.highlighted) {
-        [[UIColor colorWithWhite:0.25f alpha:0.3f] setFill];
-        CGContextFillRect(ctx, CGRectMake(0.f, 0.f, kTileSize.width, kTileSize.height));
+    NSStringDrawingContext *stringContext = [[NSStringDrawingContext alloc] init];
+    NSStringDrawingOptions options = (NSStringDrawingUsesFontLeading | NSStringDrawingUsesLineFragmentOrigin);
+    CGRect boundingRect = [string boundingRectWithSize:rect.size options:options context:stringContext];
+    CGSize textSize = boundingRect.size;
+
+    CGFloat textX = roundf(0.5f * (kTileSize.width - textSize.width));
+    CGFloat textY = roundf(0.5f * (kTileSize.height - textSize.height));
+    boundingRect.origin = CGPointMake(textX, textY);
+
+    boundingRect = CGRectIntegral(boundingRect);
+    [string drawWithRect:boundingRect options:options context:stringContext];
+
+    if (self.isHighlighted)
+    {
+        UIColor *highlightColor = [UIColor colorWithWhite:0.25f alpha:0.3f];
+        [highlightColor setFill];
+        CGRect fillRect = (CGRect){CGPointZero,kTileSize};
+        CGContextFillRect(ctx, fillRect);
     }
 }
 
 - (void)resetState
 {
     // realign to the grid
-    CGRect frame = self.frame;
-    frame.origin = origin;
-    frame.size = kTileSize;
-    self.frame = frame;
+    CGRect frame = (CGRect){self.origin, kTileSize};
+    self.frame = CGRectIntegral(frame);
 
-    [date release];
-    date = nil;
-    flags.type = KalTileTypeRegular;
-    flags.highlighted = NO;
-    flags.selected = NO;
-    flags.marked = NO;
+    if (_date)
+        [_date release];
+    _date = nil;
+    self.highlighted = NO;
+    self.selected = NO;
+    self.marked = NO;
+
+    self.type = KalTileTypeRegular;
 }
 
 - (void)setDate:(KalDate *)aDate
 {
-    if (date == aDate)
+    if (_date == aDate)
         return;
 
-    [date release];
-    date = [aDate retain];
+    if (_date)
+        [_date release];
+    _date = [aDate retain];
 
     [self setNeedsDisplay];
 }
-
-- (BOOL)isSelected { return flags.selected; }
 
 - (void)setSelected:(BOOL)selected
 {
-    if (flags.selected == selected)
+    if (_selected == selected)
         return;
-
-    // workaround since I cannot draw outside of the frame in drawRect:
-    if (![self isToday]) {
-        CGRect rect = self.frame;
-        if (selected) {
-            rect.origin.x--;
-            rect.size.width++;
-            rect.size.height++;
-        } else {
-            rect.origin.x++;
-            rect.size.width--;
-            rect.size.height--;
-        }
-        self.frame = rect;
-    }
-
-    flags.selected = selected;
+    _selected = selected;
     [self setNeedsDisplay];
 }
-
-- (BOOL)isHighlighted { return flags.highlighted; }
 
 - (void)setHighlighted:(BOOL)highlighted
 {
-    if (flags.highlighted == highlighted)
+    if (_highlighted == highlighted)
         return;
-
-    flags.highlighted = highlighted;
+    _highlighted = highlighted;
     [self setNeedsDisplay];
 }
-
-- (BOOL)isMarked { return flags.marked; }
 
 - (void)setMarked:(BOOL)marked
 {
-    if (flags.marked == marked)
+    if (_marked == marked)
         return;
-
-    flags.marked = marked;
+    _marked = marked;
     [self setNeedsDisplay];
 }
-
-- (KalTileType)type { return flags.type; }
 
 - (void)setType:(KalTileType)tileType
 {
-    if (flags.type == tileType)
+    if (_type == tileType)
         return;
-
-    // workaround since I cannot draw outside of the frame in drawRect:
-    CGRect rect = self.frame;
-    if (tileType == KalTileTypeToday) {
-        rect.origin.x--;
-        rect.size.width++;
-        rect.size.height++;
-    } else if (flags.type == KalTileTypeToday) {
-        rect.origin.x++;
-        rect.size.width--;
-        rect.size.height--;
-    }
-    self.frame = rect;
-    
-    flags.type = tileType;
+    _type = tileType;
     [self setNeedsDisplay];
 }
 
-- (BOOL)isToday { return flags.type == KalTileTypeToday; }
+- (BOOL)isToday { return self.type == KalTileTypeToday; }
 
-- (BOOL)belongsToAdjacentMonth { return flags.type == KalTileTypeAdjacent; }
+- (BOOL)belongsToAdjacentMonth { return self.type == KalTileTypeAdjacent; }
 
 - (void)dealloc
 {
-    [date release];
+    if (_date)
+        [_date release];
+    _date = nil;
     [super dealloc];
 }
 
