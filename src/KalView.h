@@ -38,21 +38,16 @@
  *
  */
 @interface KalView : UIView
-{
-	UILabel *headerTitleLabel;
-	IBOutlet KalGridView *gridView;
-	IBOutlet UITableView *tableView;
-	id<KalViewDelegate> __weak delegate;
-}
 
 @property (nonatomic, weak) id<KalViewDelegate> delegate;
 @property (nonatomic, strong) UITableView *tableView;
-@property (weak, nonatomic, readonly) KalDate *selectedDate;
-@property (nonatomic, readonly) KalGridView *gridView;
+@property (nonatomic, weak, readonly) KalDate *selectedDate;
+@property (nonatomic, strong) KalGridView *gridView;
+@property (nonatomic, strong) UILabel *headerTitleLabel;
+@property (nonatomic, getter=isSliding, readonly) BOOL sliding;
 
 
-- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate;
-- (BOOL)isSliding;
+- (instancetype)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate;
 - (void)selectDate:(KalDate *)date;
 - (void)markTilesForDates:(NSArray *)dates;
 - (void)redrawEntireMonth;

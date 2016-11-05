@@ -10,24 +10,13 @@
 #import "KalDate.h"
 #import "UtilityMethods.h"
 
-@interface KalView ()
-- (void)addSubviewsToHeaderView:(UIView *)headerView;
-- (void)addSubviewsToContentView:(UIView *)contentView;
-- (void)setHeaderTitleText:(NSString *)text;
-@end
-
 static const CGFloat kHeaderHeight = 44.f;
 static const CGFloat kMonthLabelHeight = 17.f;
 
 @implementation KalView
 
-@synthesize delegate, tableView, gridView;
-
-/*
- - (id)initWithCoder:(NSCoder *)aDecoder { 
- return [self initWithFrame:self.frame delegate:delegate logic:logic]; 
- }*/
-- (void)finalizeInit {
+- (void)finalizeInit
+{
 	[[KalLogic sharedLogic] addObserver:self forKeyPath:@"selectedMonthNameAndYear" options:NSKeyValueObservingOptionNew context:NULL];
 	self.autoresizesSubviews = YES;
     
@@ -37,7 +26,8 @@ static const CGFloat kMonthLabelHeight = 17.f;
 		frameWidth = 322.f;
 		frameHeight = 309.f;
 	}
-	else {
+	else
+    {
 		frameWidth = self.frame.size.width;
 		frameHeight = self.frame.size.height - kHeaderHeight;
 		self.autoresizingMask = UIViewAutoresizingFlexibleHeight;
@@ -48,57 +38,79 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	[self addSubview:headerView];
 	
 	UIView *contentView = [[UIView alloc] initWithFrame:CGRectMake(0.f, kHeaderHeight, frameWidth, frameHeight)];
-    if (![UtilityMethods isIPadDevice]) {
+    if (![UtilityMethods isIPadDevice])
+    {
         contentView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     }
 	[self addSubviewsToContentView:contentView];
 	[self addSubview:contentView];		
 }
 
-- (void)awakeFromNib {
+- (void)awakeFromNib
+{
 	[super awakeFromNib];
 	
-	if (!delegate) {
+	if (!_delegate)
+    {
 		NSLog(@"KalView doesn't have a delegate!");
 	}
 	[self finalizeInit];
 }	
 
-- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)theDelegate
+- (instancetype)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)theDelegate
 {
-	if ((self = [super initWithFrame:frame])) {
-		delegate = theDelegate;
+	if ((self = [super initWithFrame:frame]))
+    {
+		_delegate = theDelegate;
 		[self finalizeInit];
 	}
 	
 	return self;
 }
 
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame
 {
-	delegate = nil;
+	_delegate = nil;
 	[NSException raise:@"Incomplete initializer" format:@"KalView must be initialized with a delegate. Use the initWithFrame:delegate method."];
 	return nil;
 }
 
-- (void)redrawEntireMonth { [self jumpToSelectedMonth]; }
+- (void)redrawEntireMonth
+{
+    [self jumpToSelectedMonth];
+}
 
-- (void)slideDown { [gridView slideDown]; }
-- (void)slideUp { [gridView slideUp]; }
+- (void)slideDown
+{
+    [_gridView slideDown];
+}
+- (void)slideUp
+{
+    [_gridView slideUp];
+}
 
 - (void)showPreviousMonth
 {
-	if (!gridView.transitioning) {
+	if (!_gridView.transitioning)
+    {
+        id<KalViewDelegate> delegate = self.delegate;
 		if (delegate && [delegate respondsToSelector:@selector(showPreviousMonth)])
+        {
 			[delegate performSelector:@selector(showPreviousMonth)];
+        }
 	}
 }
 
 - (void)showFollowingMonth
 {
-	if (!gridView.transitioning)
+	if (!_gridView.transitioning)
+    {
+        id<KalViewDelegate> delegate = self.delegate;
 		if (delegate && [delegate respondsToSelector:@selector(showFollowingMonth)])
+        {
 			[delegate performSelector:@selector(showFollowingMonth)];
+        }
+    }
 }
 
 - (void)addSubviewsToHeaderView:(UIView *)theHeader
@@ -132,14 +144,14 @@ static const CGFloat kMonthLabelHeight = 17.f;
 										kHeaderVerticalAdjust,
 										kMonthLabelWidth,
 										kMonthLabelHeight);
-	headerTitleLabel = [[UILabel alloc] initWithFrame:monthLabelFrame];
-	headerTitleLabel.backgroundColor = [UIColor clearColor];
-	headerTitleLabel.font = [UIFont boldSystemFontOfSize:22.f];
-	headerTitleLabel.textAlignment = NSTextAlignmentCenter;
-	headerTitleLabel.textColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"Kal.bundle/kal_header_text_fill.png"]];
+	_headerTitleLabel = [[UILabel alloc] initWithFrame:monthLabelFrame];
+	_headerTitleLabel.backgroundColor = [UIColor clearColor];
+	_headerTitleLabel.font = [UIFont boldSystemFontOfSize:22.f];
+	_headerTitleLabel.textAlignment = NSTextAlignmentCenter;
+	_headerTitleLabel.textColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"Kal.bundle/kal_header_text_fill.png"]];
 
 	[self setHeaderTitleText:[[KalLogic sharedLogic] selectedMonthNameAndYear]];
-	[theHeader addSubview:headerTitleLabel];
+	[theHeader addSubview:_headerTitleLabel];
 	
 	// Create the next month button on the right side of the view
 	CGRect nextMonthButtonFrame = CGRectMake(theHeader.width - kChangeMonthButtonWidth,
@@ -157,7 +169,8 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	NSArray *weekdayNames = [[[NSDateFormatter alloc] init] shortWeekdaySymbols];
 	NSUInteger firstWeekday = [[NSCalendar currentCalendar] firstWeekday];
 	NSUInteger i = firstWeekday - 1;
-	for (CGFloat xOffset = 0.f; xOffset < theHeader.width; xOffset += 46.f, i = (i+1)%7) {
+	for (CGFloat xOffset = 0.f; xOffset < theHeader.width; xOffset += 46.f, i = (i+1)%7)
+    {
 		CGRect weekdayFrame = CGRectMake(xOffset, 30.f, 46.f, kHeaderHeight - 29.f);
 		UILabel *weekdayLabel = [[UILabel alloc] initWithFrame:weekdayFrame];
 		weekdayLabel.backgroundColor = [UIColor clearColor];
@@ -177,25 +190,26 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	CGRect fullWidthAutomaticLayoutFrame = CGRectMake(0.f, 0.f, 322, 0.f);
 	
 	// The tile grid (the calendar body)
-	gridView = [[KalGridView alloc] initWithFrame:fullWidthAutomaticLayoutFrame delegate:delegate];
-	[gridView addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:NULL];
-	[contentView addSubview:gridView];
+	_gridView = [[KalGridView alloc] initWithFrame:fullWidthAutomaticLayoutFrame delegate:_delegate];
+	[_gridView addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:NULL];
+	[contentView addSubview:_gridView];
 	
 	// The list of events for the selected day
-	if (!self.tableView) {
-		self.tableView = [[UITableView alloc] initWithFrame:fullWidthAutomaticLayoutFrame style:UITableViewStylePlain];
-		self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-		[contentView addSubview:self.tableView];
+	if (!self.tableView)
+    {
+		_tableView = [[UITableView alloc] initWithFrame:fullWidthAutomaticLayoutFrame style:UITableViewStylePlain];
+		_tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+		[contentView addSubview:_tableView];
 	}
 
 	// Trigger the initial KVO update to finish the contentView layout
-	[gridView sizeToFit];
+	[_gridView sizeToFit];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-	if (object == gridView && [keyPath isEqualToString:@"frame"]) {
-		
+	if (object == self.gridView && [keyPath isEqualToString:@"frame"])
+    {
 		/* Animate tableView filling the remaining space after the
 		 * gridView expanded or contracted to fit the # of weeks
 		 * for the month that is being displayed.
@@ -206,46 +220,64 @@ static const CGFloat kMonthLabelHeight = 17.f;
 		 * tableView here, I do not need to wrap it in a
 		 * [UIView beginAnimations:context:].
 		 */
-		if (!isIpadDevice()) {
-			CGFloat gridBottom = gridView.top + gridView.height;
+		if (!isIpadDevice())
+        {
+			CGFloat gridBottom = _gridView.top + _gridView.height;
 			CGRect frame = self.tableView.frame;
 			frame.origin.y = gridBottom;
-			frame.size.height = tableView.superview.height - gridBottom;
-			self.tableView.frame = frame;
+			frame.size.height = _tableView.superview.height - gridBottom;
+			_tableView.frame = frame;
 		}
-		
-	} else if ([keyPath isEqualToString:@"selectedMonthNameAndYear"]) {
+	}
+    else if ([keyPath isEqualToString:@"selectedMonthNameAndYear"])
+    {
 		[self setHeaderTitleText:[change objectForKey:NSKeyValueChangeNewKey]];
 		
-	} else {
+	} else
+    {
 		[super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
 	}
 }
 
 - (void)setHeaderTitleText:(NSString *)text
 {
-	[headerTitleLabel setText:text];
-	if (!isIpadDevice()) {
-		[headerTitleLabel sizeToFit];
-		headerTitleLabel.left = floorf(self.width/2.f - headerTitleLabel.width/2.f);
+	[self.headerTitleLabel setText:text];
+	if (!isIpadDevice())
+    {
+		[self.headerTitleLabel sizeToFit];
+		self.headerTitleLabel.left = floorf(self.width/2.f - self.headerTitleLabel.width/2.f);
 	}
 }
 
-- (void)jumpToSelectedMonth { [gridView jumpToSelectedMonth]; }
+- (void)jumpToSelectedMonth
+{
+    [self.gridView jumpToSelectedMonth];
+}
 
-- (void)selectDate:(KalDate *)date { [gridView selectDate:date]; }
+- (void)selectDate:(KalDate *)date
+{
+    [self.gridView selectDate:date];
+}
 
-- (BOOL)isSliding { return gridView.transitioning; }
+- (BOOL)isSliding
+{
+    return self.gridView.transitioning;
+}
 
-- (void)markTilesForDates:(NSArray *)dates { [gridView markTilesForDates:dates]; }
+- (void)markTilesForDates:(NSArray *)dates
+{
+    [self.gridView markTilesForDates:dates];
+}
 
-- (KalDate *)selectedDate { return gridView.selectedDate; }
+- (KalDate *)selectedDate
+{
+    return self.gridView.selectedDate;
+}
 
 - (void)dealloc
 {
 	[[KalLogic sharedLogic] removeObserver:self forKeyPath:@"selectedMonthNameAndYear"];
-	[gridView removeObserver:self forKeyPath:@"frame"];
-	
+	[self.gridView removeObserver:self forKeyPath:@"frame"];
 }
 
 @end

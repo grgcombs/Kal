@@ -14,6 +14,7 @@
 #include <mach/mach_time.h>
 #include <time.h>
 #include <math.h>
+
 void mach_absolute_difference(uint64_t end, uint64_t start, struct timespec *tp)
 {
     uint64_t difference = end - start;
@@ -31,23 +32,22 @@ void mach_absolute_difference(uint64_t end, uint64_t start, struct timespec *tp)
 NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotification";
 
 @implementation KalViewController
-@synthesize calendarView;
-@synthesize dataSource, delegate;
 
-/*- (id)initWithCoder:(NSCoder *)aDecoder { 
- return [self initWithSelectedDate:[NSDate date]]; 
- }*/
-- (void)awakeFromNib {
+- (void)awakeFromNib
+{
 	[super awakeFromNib];
-	if (!initialSelectedDate)
-		initialSelectedDate = [NSDate date];		
+	if (!_initialSelectedDate)
+		_initialSelectedDate = [NSDate date];
 }
 
 - (id)initWithSelectedDate:(NSDate *)selectedDate
 {
-	if ((self = [super init])) {
-		initialSelectedDate = selectedDate;
-		[[KalLogic sharedLogic] moveToMonthForDate:initialSelectedDate];
+	if ((self = [super init]))
+    {
+        if (!selectedDate)
+            selectedDate = [NSDate date];
+		_initialSelectedDate = selectedDate;
+		[[KalLogic sharedLogic] moveToMonthForDate:selectedDate];
 	}
 	return self;
 }
@@ -57,45 +57,51 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 	return [self initWithSelectedDate:[NSDate date]];
 }
 
-- (KalView*)calendarView { 
-	if (!calendarView) {
-		if (self.view && [self.view isKindOfClass:[KalView class]]) {
+- (KalView*)calendarView
+{
+    KalView *calendarView = _calendarView;
+	if (!calendarView)
+    {
+		if (self.view && [self.view isKindOfClass:[KalView class]])
+        {
 			calendarView = (KalView *)self.view;
+            _calendarView = calendarView;
 		}
 	}
 	return calendarView;
 }
 
-- (KalLogic*)logic {
+- (KalLogic*)logic
+{
 	return [KalLogic sharedLogic];
 }
 
 - (void)setDataSource:(id<KalDataSource>)aDataSource
 {
-	if (dataSource != aDataSource) {
-		dataSource = aDataSource;
-		tableView.dataSource = dataSource;
+	if (_dataSource != aDataSource) {
+		_dataSource = aDataSource;
+		_tableView.dataSource = _dataSource;
 	}
 }
 
-- (void)setDelegate:(id<UITableViewDelegate>)aDelegate
+- (void)setDelegate:(id<UITableViewDelegate>)delegate
 {
-	if (delegate != aDelegate) {
-		delegate = aDelegate;
-		tableView.delegate = delegate;
+    if (_delegate != delegate) {
+		_delegate = delegate;
+		_tableView.delegate = delegate;
 	}
 }
 
 - (void)clearTable
 {
-	[dataSource removeAllItems];
-	[tableView reloadData];
+	[_dataSource removeAllItems];
+	[_tableView reloadData];
 }
 
 - (void)reloadData
 {
 	KalLogic *theLogic = [KalLogic sharedLogic];
-	[dataSource presentingDatesFrom:theLogic.fromDate to:theLogic.toDate delegate:self];
+	[_dataSource presentingDatesFrom:theLogic.fromDate to:theLogic.toDate delegate:self];
 }
 
 - (void)significantTimeChangeOccurred
@@ -113,9 +119,9 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 	NSDate *from = [selDate cc_dateByMovingToBeginningOfDay];
 	NSDate *to = [selDate cc_dateByMovingToEndOfDay];
 	[self clearTable];
-	[dataSource loadItemsFromDate:from toDate:to];
-	[tableView reloadData];
-	[tableView flashScrollIndicators];
+	[_dataSource loadItemsFromDate:from toDate:to];
+	[_tableView reloadData];
+	[_tableView flashScrollIndicators];
 }
 
 - (void)showPreviousMonth
@@ -200,14 +206,15 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 	if (!self.title && isIpadDevice())
 		self.title = NSLocalizedString(@"Calendar", @"");
 	
-	if (!tableView && self.calendarView.tableView) {
-		tableView = self.calendarView.tableView;
+	if (!_tableView && self.calendarView.tableView)
+    {
+		_tableView = self.calendarView.tableView;
 	}
-	if (tableView) {
-		tableView.dataSource = dataSource;
-		tableView.delegate = delegate;
+	if (_tableView) {
+		_tableView.dataSource = _dataSource;
+		_tableView.delegate = _delegate;
 	}
-	[self.calendarView selectDate:[KalDate dateFromNSDate:initialSelectedDate]];
+	[self.calendarView selectDate:[KalDate dateFromNSDate:self.initialSelectedDate]];
 	[self reloadData];
 }
 
@@ -221,13 +228,13 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-	[tableView reloadData];
+	[self.tableView reloadData];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
-	[tableView flashScrollIndicators];
+	[self.tableView flashScrollIndicators];
 }
 
 #pragma mark -
