@@ -42,12 +42,12 @@ static const CGFloat kMonthLabelHeight = 17.f;
 		frameHeight = self.frame.size.height - kHeaderHeight;
 		self.autoresizingMask = UIViewAutoresizingFlexibleHeight;
 	}
-	UIView *headerView = [[[UIView alloc] initWithFrame:CGRectMake(0.f, 0.f, frameWidth, kHeaderHeight)] autorelease];
+	UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0.f, 0.f, frameWidth, kHeaderHeight)];
 	headerView.backgroundColor = [UIColor grayColor];
 	[self addSubviewsToHeaderView:headerView];
 	[self addSubview:headerView];
 	
-	UIView *contentView = [[[UIView alloc] initWithFrame:CGRectMake(0.f, kHeaderHeight, frameWidth, frameHeight)] autorelease];
+	UIView *contentView = [[UIView alloc] initWithFrame:CGRectMake(0.f, kHeaderHeight, frameWidth, frameHeight)];
     if (![UtilityMethods isIPadDevice]) {
         contentView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     }
@@ -114,7 +114,6 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	imageFrame.origin = CGPointZero;
 	backgroundView.frame = imageFrame;
 	[theHeader addSubview:backgroundView];
-	[backgroundView release];
 	
 	// Create the previous month button on the left side of the view
 	CGRect previousMonthButtonFrame = CGRectMake(theHeader.left,
@@ -127,7 +126,6 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	previousMonthButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
 	[previousMonthButton addTarget:self action:@selector(showPreviousMonth) forControlEvents:UIControlEventTouchUpInside];
 	[theHeader addSubview:previousMonthButton];
-	[previousMonthButton release];
 	
 	// Draw the selected month name centered and at the top of the view
 	CGRect monthLabelFrame = CGRectMake((theHeader.width/2.0f) - (kMonthLabelWidth/2.0f),
@@ -154,10 +152,9 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	nextMonthButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
 	[nextMonthButton addTarget:self action:@selector(showFollowingMonth) forControlEvents:UIControlEventTouchUpInside];
 	[theHeader addSubview:nextMonthButton];
-	[nextMonthButton release];
 	
 	// Add column labels for each weekday (adjusting based on the current locale's first weekday)
-	NSArray *weekdayNames = [[[[NSDateFormatter alloc] init] autorelease] shortWeekdaySymbols];
+	NSArray *weekdayNames = [[[NSDateFormatter alloc] init] shortWeekdaySymbols];
 	NSUInteger firstWeekday = [[NSCalendar currentCalendar] firstWeekday];
 	NSUInteger i = firstWeekday - 1;
 	for (CGFloat xOffset = 0.f; xOffset < theHeader.width; xOffset += 46.f, i = (i+1)%7) {
@@ -169,7 +166,6 @@ static const CGFloat kMonthLabelHeight = 17.f;
 		weekdayLabel.textColor = [UIColor colorWithRed:0.3f green:0.3f blue:0.3f alpha:1.f];
 		weekdayLabel.text = [weekdayNames objectAtIndex:i];
 		[theHeader addSubview:weekdayLabel];
-		[weekdayLabel release];
 	}
 }
 
@@ -187,7 +183,7 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	
 	// The list of events for the selected day
 	if (!self.tableView) {
-		self.tableView = [[[UITableView alloc] initWithFrame:fullWidthAutomaticLayoutFrame style:UITableViewStylePlain] autorelease];
+		self.tableView = [[UITableView alloc] initWithFrame:fullWidthAutomaticLayoutFrame style:UITableViewStylePlain];
 		self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 		[contentView addSubview:self.tableView];
 	}
@@ -250,10 +246,6 @@ static const CGFloat kMonthLabelHeight = 17.f;
 	[[KalLogic sharedLogic] removeObserver:self forKeyPath:@"selectedMonthNameAndYear"];
 	[gridView removeObserver:self forKeyPath:@"frame"];
 	
-	[headerTitleLabel release];
-	[gridView release];
-	self.tableView = nil;
-	[super dealloc];
 }
 
 @end

@@ -127,8 +127,6 @@ extern const CGSize kTileSize;
     CGRect frame = (CGRect){self.origin, kTileSize};
     self.frame = CGRectIntegral(frame);
 
-    if (_date)
-        [_date release];
     _date = nil;
     self.highlighted = NO;
     self.selected = NO;
@@ -142,9 +140,7 @@ extern const CGSize kTileSize;
     if (_date == aDate)
         return;
 
-    if (_date)
-        [_date release];
-    _date = [aDate retain];
+    _date = aDate;
 
     [self setNeedsDisplay];
 }
@@ -187,10 +183,7 @@ extern const CGSize kTileSize;
 
 - (void)dealloc
 {
-    if (_date)
-        [_date release];
     _date = nil;
-    [super dealloc];
 }
 
 @end

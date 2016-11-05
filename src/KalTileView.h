@@ -15,7 +15,7 @@ typedef NS_ENUM(NSUInteger, KalTileType) {
 
 @interface KalTileView : UIView
 
-@property (nonatomic, retain) KalDate *date;
+@property (nonatomic, strong) KalDate *date;
 @property (nonatomic, getter=isHighlighted) BOOL highlighted;
 @property (nonatomic, getter=isSelected) BOOL selected;
 @property (nonatomic, getter=isMarked) BOOL marked;

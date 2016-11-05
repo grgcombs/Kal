@@ -13,11 +13,11 @@
 - (NSUInteger)numberOfDaysInPreviousPartialWeek;
 - (NSUInteger)numberOfDaysInFollowingPartialWeek;
 
-@property (nonatomic, retain) NSDate *fromDate;
-@property (nonatomic, retain) NSDate *toDate;
-@property (nonatomic, retain) NSArray *daysInSelectedMonth;
-@property (nonatomic, retain) NSArray *daysInFinalWeekOfPreviousMonth;
-@property (nonatomic, retain) NSArray *daysInFirstWeekOfFollowingMonth;
+@property (nonatomic, strong) NSDate *fromDate;
+@property (nonatomic, strong) NSDate *toDate;
+@property (nonatomic, strong) NSArray *daysInSelectedMonth;
+@property (nonatomic, strong) NSArray *daysInFinalWeekOfPreviousMonth;
+@property (nonatomic, strong) NSArray *daysInFirstWeekOfFollowingMonth;
 
 @end
 
@@ -146,16 +146,5 @@
 
 #pragma mark -
 
-- (void) dealloc
-{
-    [monthAndYearFormatter release];
-    [baseDate release];
-    [fromDate release];
-    [toDate release];
-    [daysInSelectedMonth release];
-    [daysInFinalWeekOfPreviousMonth release];
-    [daysInFirstWeekOfFollowingMonth release];
-    [super dealloc];
-}
 
 @end

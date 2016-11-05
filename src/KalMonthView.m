@@ -34,7 +34,6 @@ extern const CGSize kTileSize;
                 tileView.tileIndex = tileIndex;
                 [tiles addObject:tileView];
                 [self addSubview:tileView];
-                [tileView release];
                 tileIndex++;
             }
         }

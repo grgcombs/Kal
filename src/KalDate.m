@@ -10,7 +10,7 @@
 
 + (KalDate *)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
 {
-    return [[[KalDate alloc] initForDay:day month:month year:year] autorelease];
+    return [[KalDate alloc] initForDay:day month:month year:year];
 }
 
 + (KalDate *)dateFromNSDate:(NSDate *)date
@@ -41,8 +41,7 @@
         c.day = _day;
         c.month = _month;
         c.year = _year;
-        _date = [[[NSCalendar currentCalendar] dateFromComponents:c] retain];
-        [c release];
+        _date = [[NSCalendar currentCalendar] dateFromComponents:c];
     }
     return _date;
 }

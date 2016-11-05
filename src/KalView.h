@@ -42,12 +42,12 @@
 	UILabel *headerTitleLabel;
 	IBOutlet KalGridView *gridView;
 	IBOutlet UITableView *tableView;
-	id<KalViewDelegate> delegate;
+	id<KalViewDelegate> __weak delegate;
 }
 
-@property (nonatomic, assign) id<KalViewDelegate> delegate;
-@property (nonatomic, retain) UITableView *tableView;
-@property (nonatomic, readonly) KalDate *selectedDate;
+@property (nonatomic, weak) id<KalViewDelegate> delegate;
+@property (nonatomic, strong) UITableView *tableView;
+@property (weak, nonatomic, readonly) KalDate *selectedDate;
 @property (nonatomic, readonly) KalGridView *gridView;
 
 

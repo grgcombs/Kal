@@ -40,13 +40,13 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 - (void)awakeFromNib {
 	[super awakeFromNib];
 	if (!initialSelectedDate)
-		initialSelectedDate = [[NSDate date] retain];		
+		initialSelectedDate = [NSDate date];		
 }
 
 - (id)initWithSelectedDate:(NSDate *)selectedDate
 {
 	if ((self = [super init])) {
-		initialSelectedDate = [selectedDate retain];
+		initialSelectedDate = selectedDate;
 		[[KalLogic sharedLogic] moveToMonthForDate:initialSelectedDate];
 	}
 	return self;
@@ -151,7 +151,6 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
     }
 	
 	[self.calendarView markTilesForDates:dates];
-    [dates release];
 	[self didSelectDate:self.calendarView.selectedDate];
 }
 
@@ -202,7 +201,7 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 		self.title = NSLocalizedString(@"Calendar", @"");
 	
 	if (!tableView && self.calendarView.tableView) {
-		tableView = [self.calendarView.tableView retain];
+		tableView = self.calendarView.tableView;
 	}
 	if (tableView) {
 		tableView.dataSource = dataSource;
@@ -235,16 +234,9 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 
 - (void)dealloc
 {
-	if (initialSelectedDate) {
-		[initialSelectedDate release];
-	}
-	if (tableView) {
-		[tableView release];
-	}
 	self.calendarView = nil;	
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationSignificantTimeChangeNotification object:nil];
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:KalDataSourceChangedNotification object:nil];
-	[super dealloc];
 }
 
 - (void)didReceiveMemoryWarning {
