@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2009 Keith Lazuka
  * License: http://www.opensource.org/licenses/mit-license.html
  */
@@ -9,59 +9,61 @@
 
 - (NSDate *)cc_dateByMovingToBeginningOfDay
 {
-  unsigned int flags = NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond;
-  NSDateComponents* parts = [[NSCalendar currentCalendar] components:flags fromDate:self];
-  [parts setHour:0];
-  [parts setMinute:0];
-  [parts setSecond:0];
-  return [[NSCalendar currentCalendar] dateFromComponents:parts];
+    unsigned int flags = NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond;
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDateComponents* parts = [calendar components:flags fromDate:self];
+    parts.hour = 0;
+    parts.minute = 0;
+    parts.second = 0;
+    return [calendar dateFromComponents:parts];
 }
 
 - (NSDate *)cc_dateByMovingToEndOfDay
 {
-  unsigned int flags = NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond;
-  NSDateComponents* parts = [[NSCalendar currentCalendar] components:flags fromDate:self];
-  [parts setHour:23];
-  [parts setMinute:59];
-  [parts setSecond:59];
-  return [[NSCalendar currentCalendar] dateFromComponents:parts];
+    unsigned int flags = NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond;
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDateComponents* parts = [calendar components:flags fromDate:self];
+    parts.hour = 23;
+    parts.minute = 59;
+    parts.second = 59;
+    return [calendar dateFromComponents:parts];
 }
 
 - (NSDate *)cc_dateByMovingToFirstDayOfTheMonth
 {
-  NSDate *d = nil;
-  BOOL ok = [[NSCalendar currentCalendar] rangeOfUnit:NSCalendarUnitMonth startDate:&d interval:NULL forDate:self];
-  NSAssert1(ok, @"Failed to calculate the first day the month based on %@", self);
-  return d;
+    NSDate *d = nil;
+    BOOL ok = [[NSCalendar currentCalendar] rangeOfUnit:NSCalendarUnitMonth startDate:&d interval:NULL forDate:self];
+    NSAssert1(ok, @"Failed to calculate the first day the month based on %@", self);
+    return d;
 }
 
 - (NSDate *)cc_dateByMovingToFirstDayOfThePreviousMonth
 {
-  NSDateComponents *c = [[NSDateComponents alloc] init];
-  c.month = -1;
-  return [[[NSCalendar currentCalendar] dateByAddingComponents:c toDate:self options:0] cc_dateByMovingToFirstDayOfTheMonth];  
+    NSDateComponents *c = [[NSDateComponents alloc] init];
+    c.month = -1;
+    return [[[NSCalendar currentCalendar] dateByAddingComponents:c toDate:self options:0] cc_dateByMovingToFirstDayOfTheMonth];
 }
 
 - (NSDate *)cc_dateByMovingToFirstDayOfTheFollowingMonth
 {
-  NSDateComponents *c = [[NSDateComponents alloc] init];
-  c.month = 1;
-  return [[[NSCalendar currentCalendar] dateByAddingComponents:c toDate:self options:0] cc_dateByMovingToFirstDayOfTheMonth];
+    NSDateComponents *c = [[NSDateComponents alloc] init];
+    c.month = 1;
+    return [[[NSCalendar currentCalendar] dateByAddingComponents:c toDate:self options:0] cc_dateByMovingToFirstDayOfTheMonth];
 }
 
 - (NSDateComponents *)cc_componentsForMonthDayAndYear
 {
-  return [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:self];
+    return [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:self];
 }
 
 - (NSUInteger)cc_weekday
 {
-  return [[NSCalendar currentCalendar] ordinalityOfUnit:NSCalendarUnitDay inUnit:NSWeekCalendarUnit forDate:self];
+    return [[NSCalendar currentCalendar] ordinalityOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitWeekOfMonth forDate:self];
 }
 
 - (NSUInteger)cc_numberOfDaysInMonth
 {
-  return [[NSCalendar currentCalendar] rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:self].length;
+    return [[NSCalendar currentCalendar] rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:self].length;
 }
 
 @end
