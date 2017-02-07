@@ -13,10 +13,10 @@
 @property (nonatomic,strong) NSDate *date;
 
 
-+ (KalDate *)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year;
-+ (KalDate *)dateFromNSDate:(NSDate *)date;
++ (instancetype)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year;
++ (instancetype)dateFromNSDate:(NSDate *)date;
 
-- (id)initForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year;
+- (instancetype)initForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year;
 - (NSDate *)NSDate;
 - (NSComparisonResult)compare:(KalDate *)otherDate;
 - (BOOL)isToday;

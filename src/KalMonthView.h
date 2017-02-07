@@ -9,12 +9,12 @@
 
 @interface KalMonthView : UIView
 
-@property (nonatomic, readonly) NSUInteger numWeeks;
+@property (nonatomic, assign, readonly) UInt8 numWeeks;
 
-- (id)initWithFrame:(CGRect)rect; // designated initializer
-- (void)showDates:(NSArray *)mainDates leadingAdjacentDates:(NSArray *)leadingAdjacentDates trailingAdjacentDates:(NSArray *)trailingAdjacentDates;
+- (instancetype)initWithFrame:(CGRect)rect calendar:(NSCalendar *)calendar; // NS_DESIGNATED_INITIALIZER;
+- (void)showDates:(NSArray<KalDate *> *)mainDates leadingAdjacentDates:(NSArray<KalDate *> *)leadingAdjacentDates trailingAdjacentDates:(NSArray<KalDate *> *)trailingAdjacentDates;
 - (KalTileView *)firstTileOfMonth;
 - (KalTileView *)tileForDate:(KalDate *)date;
-- (void)markTilesForDates:(NSArray *)dates;
+- (void)markTilesForDates:(NSArray<KalDate *> *)dates;
 
 @end

@@ -22,33 +22,36 @@ const CGSize kTileSize = { 46.f, 44.f };
 static NSString *kSlideAnimationId = @"KalSwitchMonths";
 
 @interface KalGridView ()
+@property (nonatomic, assign, getter=isTransitioning) BOOL transitioning;
 @property (nonatomic, strong) KalTileView *selectedTile;
 @property (nonatomic, strong) KalTileView *highlightedTile;
 @property (nonatomic, strong) KalMonthView *frontMonthView;
 @property (nonatomic, strong) KalMonthView *backMonthView;
+@property (nonatomic, strong) NSCalendar *calendar;
 @end
 
 @implementation KalGridView
 
-- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)theDelegate
+- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)theDelegate calendar:(NSCalendar *)calendar
 {
-    // MobileCal uses 46px wide tiles, with a 2px inner stroke
-    // along the top and right edges. Since there are 7 columns,
-    // the width needs to be 46*7 (322px). But the iPhone's screen
-    // is only 320px wide, so we need to make the
-    // frame extend just beyond the right edge of the screen
-    // to accomodate all 7 columns. The 7th day's 2px inner stroke
-    // will be clipped off the screen, but that's fine because
-    // MobileCal does the same thing.
-    frame.size.width = 7 * kTileSize.width;
+    if (!calendar)
+        calendar = [NSCalendar autoupdatingCurrentCalendar];
 
-    if (self = [super initWithFrame:frame]) {
+    //UInt8 weekdayCount = calendar.weekdaySymbols.count;
+    //frame.size.width = ceilf(weekdayCount * kTileSize.width);
+
+    if (self = [super initWithFrame:frame])
+    {
         self.clipsToBounds = YES;
+        _calendar = calendar;
         _delegate = theDelegate;
 
-        CGRect monthRect = CGRectMake(0.f, 0.f, frame.size.width, frame.size.height);
-        _frontMonthView = [[KalMonthView alloc] initWithFrame:monthRect];
-        _backMonthView = [[KalMonthView alloc] initWithFrame:monthRect];
+        CGRect monthRect = frame;
+        monthRect.origin = CGPointZero;
+        _frontMonthView = [[KalMonthView alloc] initWithFrame:monthRect calendar:calendar];
+        _frontMonthView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        _backMonthView = [[KalMonthView alloc] initWithFrame:monthRect calendar:calendar];
+        _backMonthView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _backMonthView.hidden = YES;
         [self addSubview:_backMonthView];
         [self addSubview:_frontMonthView];
@@ -74,11 +77,14 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
 - (void)drawRect:(CGRect)rect
 {
     [super drawRect:rect];
-    [[UIImage imageNamed:@"Kal.bundle/kal_grid_background.png"] drawInRect:rect];
+    NSString *kalBundlePath = [[NSBundle mainBundle] pathForResource:@"Kal" ofType:@"bundle"];
+    NSBundle *bundle = [NSBundle bundleWithPath:kalBundlePath];
+    UIImage *image = [UIImage imageNamed:@"kal_grid_background" inBundle:bundle compatibleWithTraitCollection:self.traitCollection];
+    [image drawInRect:rect];
     [[UIColor colorWithRed:0.63f green:0.65f blue:0.68f alpha:1.f] setFill];
-    CGRect line;
-    line.origin = CGPointMake(0.f, self.height - 1.f);
-    line.size = CGSizeMake(self.width, 1.f);
+    CGRect line = rect;
+    line.size.height = 1;
+    //CGRect line = CGRectMake(0, (self.height - 1.f), self.width, 1.f);
     CGContextFillRect(UIGraphicsGetCurrentContext(), line);
 }
 
@@ -109,9 +115,9 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
 		tile.selected = YES;
 
         id<KalViewDelegate> delegate = self.delegate;
-
-		if (delegate && [delegate respondsToSelector:@selector(didSelectDate:)])
-			[delegate performSelector:@selector(didSelectDate:) withObject:tile.date];
+        if (!delegate || ![delegate conformsToProtocol:@protocol(KalViewDelegate)])
+            return;
+        [delegate didSelectDate:tile.date];
 	}
 }
 
@@ -215,7 +221,7 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
 
 - (void)slide:(int)direction
 {
-    _transitioning = YES;
+    self.transitioning = YES;
 	KalLogic *theLogic = [KalLogic sharedLogic];
     [_backMonthView showDates:theLogic.daysInSelectedMonth
         leadingAdjacentDates:theLogic.daysInFinalWeekOfPreviousMonth
@@ -239,7 +245,7 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
 
 - (void)animationDidStop:(NSString *)animationID finished:(NSNumber *)finished context:(void *)context
 {
-    _transitioning = NO;
+    self.transitioning = NO;
     _backMonthView.hidden = YES;
 }
 
@@ -263,7 +269,7 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
     [self slide:SLIDE_NONE];
 }
 
-- (void)markTilesForDates:(NSArray *)dates
+- (void)markTilesForDates:(NSArray<KalDate *> *)dates
 {
     [_frontMonthView markTilesForDates:dates];
 }

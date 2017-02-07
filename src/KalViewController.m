@@ -78,30 +78,34 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 
 - (void)setDataSource:(id<KalDataSource>)aDataSource
 {
-	if (_dataSource != aDataSource) {
-		_dataSource = aDataSource;
-		_tableView.dataSource = _dataSource;
-	}
+    _dataSource = aDataSource;
+    if (self.isViewLoaded)
+        self.tableView.dataSource = _dataSource;
 }
 
 - (void)setDelegate:(id<UITableViewDelegate>)delegate
 {
-    if (_delegate != delegate) {
-		_delegate = delegate;
-		_tableView.delegate = delegate;
-	}
+    _delegate = delegate;
+    if (self.isViewLoaded)
+        self.tableView.delegate = delegate;
 }
 
 - (void)clearTable
 {
 	[_dataSource removeAllItems];
-	[_tableView reloadData];
+    if (self.isViewLoaded)
+        [self.tableView reloadData];
 }
 
 - (void)reloadData
 {
 	KalLogic *theLogic = [KalLogic sharedLogic];
+    static BOOL isReloading;
+    if (isReloading)
+        return;
+    isReloading = YES;
 	[_dataSource presentingDatesFrom:theLogic.fromDate to:theLogic.toDate delegate:self];
+    isReloading = NO;
 }
 
 - (void)significantTimeChangeOccurred
@@ -110,18 +114,37 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 	[self reloadData];
 }
 
-// -----------------------------------------
+- (NSCalendar *)calendar
+{
+    NSCalendar *calendar = nil;
+    if (self.isViewLoaded && self.calendarView)
+        calendar = self.calendarView.calendar;
+    if (calendar)
+        return calendar;
+    return [NSCalendar autoupdatingCurrentCalendar];
+}
+
 #pragma mark KalViewDelegate protocol
 
 - (void)didSelectDate:(KalDate *)date
 {
-	NSDate *selDate = [date NSDate];
-	NSDate *from = [selDate cc_dateByMovingToBeginningOfDay];
-	NSDate *to = [selDate cc_dateByMovingToEndOfDay];
-	[self clearTable];
+
+	NSDate *realDate = [date NSDate];
+    NSCalendar *calendar = [self calendar];
+    NSDate *from = [calendar startOfDayForDate:realDate];
+
+    NSCalendarUnit flags = NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond;
+    NSDateComponents *components = [calendar components:flags fromDate:from];
+    components.day += 1;
+    components.second -= 1;
+    NSDate *to = [calendar dateFromComponents:components];
+
 	[_dataSource loadItemsFromDate:from toDate:to];
-	[_tableView reloadData];
-	[_tableView flashScrollIndicators];
+    if (self.isViewLoaded)
+    {
+        [_tableView reloadData];
+        [_tableView flashScrollIndicators];
+    }
 }
 
 - (void)showPreviousMonth
@@ -143,14 +166,14 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 // -----------------------------------------
 #pragma mark KalDataSourceCallbacks protocol
 
-- (void)loadedDataSource:(id<KalDataSource>)theDataSource;
+- (void)loadedDataSource:(id<KalDataSource>)theDataSource
 {
 	KalLogic *theLogic = [KalLogic sharedLogic];
 	NSArray *markedDates = [theDataSource markedDatesFrom:theLogic.fromDate to:theLogic.toDate];
 	NSMutableArray *dates = [markedDates mutableCopy];
 
 
-	for (int i=0; i<[markedDates count]; i++)
+	for (NSUInteger i=0; i < [markedDates count]; i++)
     {
         NSDate *date = dates[i];
         dates[i] = [KalDate dateFromNSDate:date];
@@ -183,39 +206,45 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 	mach_absolute_difference(end, start, &tp);
 	printf("[[self calendarView] jumpToSelectedMonth]: %.1f ms\n", tp.tv_nsec / 1e6);
 #endif
-	
+
 	[self.calendarView selectDate:[KalDate dateFromNSDate:date]];
 	[self reloadData];
 }
 
 - (NSDate *)selectedDate
 {
-	return [self.calendarView.selectedDate NSDate];
+    if (self.isViewLoaded && self.calendarView)
+        return [self.calendarView.selectedDate NSDate];
+    return nil;
 }
 
-
-// -----------------------------------------------------------------------------------
-#pragma mark UIViewController
-
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
 	[super viewDidLoad];
-	
+
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(significantTimeChangeOccurred) name:UIApplicationSignificantTimeChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:KalDataSourceChangedNotification object:nil];
 	
 	if (!self.title && isIpadDevice())
 		self.title = NSLocalizedString(@"Calendar", @"");
-	
-	if (!_tableView && self.calendarView.tableView)
+
+    KalView *calendarView = self.calendarView;
+	if (!_tableView && calendarView.tableView)
     {
-		_tableView = self.calendarView.tableView;
+		_tableView = calendarView.tableView;
 	}
-	if (_tableView) {
-		_tableView.dataSource = _dataSource;
-		_tableView.delegate = _delegate;
+
+    UITableView *tableView = self.tableView;
+	if (tableView) {
+		tableView.dataSource = _dataSource;
+		tableView.delegate = _delegate;
 	}
-	[self.calendarView selectDate:[KalDate dateFromNSDate:self.initialSelectedDate]];
-	[self reloadData];
+    NSDate *date = self.initialSelectedDate;
+    if (date)
+    {
+        [calendarView selectDate:[KalDate dateFromNSDate:date]];
+        [self reloadData];
+    }
 }
 
 - (void)viewDidUnload {
@@ -237,22 +266,10 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 	[self.tableView flashScrollIndicators];
 }
 
-#pragma mark -
-
 - (void)dealloc
 {
-	self.calendarView = nil;	
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationSignificantTimeChangeNotification object:nil];
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:KalDataSourceChangedNotification object:nil];
-}
-
-- (void)didReceiveMemoryWarning {
-    // Releases the view if it doesn't have a superview.
-    [super didReceiveMemoryWarning];
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation { 	
-	return ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad);
 }
 
 @end

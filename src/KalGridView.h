@@ -21,13 +21,13 @@
 @interface KalGridView : UIView
 
 
-@property (nonatomic, readonly) BOOL transitioning;
+@property (nonatomic, assign, getter=isTransitioning, readonly) BOOL transitioning;
 @property (nonatomic, readonly) KalDate *selectedDate;
 @property (nonatomic, weak) id<KalViewDelegate> delegate;
 
-- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate;
+- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate calendar:(NSCalendar *)calendar;
 - (void)selectDate:(KalDate *)date;
-- (void)markTilesForDates:(NSArray *)dates;
+- (void)markTilesForDates:(NSArray<KalDate *> *)dates;
 
 // These 3 methods should be called *after* the KalLogic
 // has moved to the previous or following month.

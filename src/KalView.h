@@ -45,11 +45,12 @@
 @property (nonatomic, strong) KalGridView *gridView;
 @property (nonatomic, strong) UILabel *headerTitleLabel;
 @property (nonatomic, getter=isSliding, readonly) BOOL sliding;
+@property (nonatomic, strong, readonly) NSCalendar *calendar;
 
 
-- (instancetype)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate;
+- (instancetype)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate calendar:(NSCalendar *)calendar;
 - (void)selectDate:(KalDate *)date;
-- (void)markTilesForDates:(NSArray *)dates;
+- (void)markTilesForDates:(NSArray<KalDate *> *)dates;
 - (void)redrawEntireMonth;
 
 // These 3 methods are exposed for the delegate. They should be called 

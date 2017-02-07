@@ -13,21 +13,35 @@
 extern const CGSize kTileSize;
 
 @interface KalMonthView ()
-@property (nonatomic,strong) NSArray *tiles;
+@property (nonatomic,strong) NSArray<KalTileView *> *tiles;
+@property (nonatomic,strong) NSCalendar *calendar;
+@property (nonatomic,assign) UInt8 numWeeks;
 @end
 
 @implementation KalMonthView
 
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame
 {
-    if ((self = [super initWithFrame:frame])) {
+    self = [self initWithFrame:frame calendar:nil];
+    return  self;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame calendar:(NSCalendar *)calendar
+{
+    if (!calendar)
+        calendar = [NSCalendar autoupdatingCurrentCalendar];
+    if ((self = [super initWithFrame:frame]))
+    {
+        _calendar = calendar;
         self.opaque = NO;
         self.clipsToBounds = YES;
         UInt16 tileIndex = 0;
         NSMutableArray *tiles = [[NSMutableArray alloc] init];
+        UInt8 weekdayCount = calendar.weekdaySymbols.count;
         for (int i=0; i<6; i++)
         {
-            for (int j=0; j<7; j++)
+            for (UInt8 j=0; j < weekdayCount; j++)
+            //for (int j=0; j<7; j++)
             {
                 CGRect r = CGRectMake(j*kTileSize.width, i*kTileSize.height, kTileSize.width, kTileSize.height);
                 KalTileView *tileView = [[KalTileView alloc] initWithFrame:r];
@@ -56,7 +70,7 @@ extern const CGSize kTileSize;
     return nil;
 }
 
-- (void)showDates:(NSArray *)mainDates leadingAdjacentDates:(NSArray *)leadingAdjacentDates trailingAdjacentDates:(NSArray *)trailingAdjacentDates
+- (void)showDates:(NSArray<KalDate *> *)mainDates leadingAdjacentDates:(NSArray<KalDate *> *)leadingAdjacentDates trailingAdjacentDates:(NSArray<KalDate *> *)trailingAdjacentDates
 {
     UInt16 tileNum = 0;
     if (!leadingAdjacentDates)
@@ -66,10 +80,13 @@ extern const CGSize kTileSize;
     if (!trailingAdjacentDates)
         trailingAdjacentDates = @[];
 
+    NSCalendar *calendar = self.calendar;
+    NSAssert(calendar != NULL, @"Must be instantiated with a valid calendar");
+
     NSArray *dateGroups = @[leadingAdjacentDates, mainDates, trailingAdjacentDates];
     for (UInt8 groupIndex = 0; groupIndex < dateGroups.count; groupIndex++)
     {
-        NSArray *dateGroup = dateGroups[groupIndex];
+        NSArray<KalDate *> *dateGroup = dateGroups[groupIndex];
         BOOL isMainGroup = (groupIndex == 1);
 
         for (KalDate *date in dateGroup)
@@ -77,10 +94,12 @@ extern const CGSize kTileSize;
             KalTileView *tile = [self tileForIndex:tileNum];
             [tile resetState];
             tile.date = date;
-
+            NSDate *realDate = date.NSDate;
+            NSAssert(realDate != NULL, @"Must be able to derive an NSDate from a KalDate");
+            
             if (!isMainGroup)
                 tile.type = KalTileTypeAdjacent;
-            else if ([date isToday])
+            else if ([calendar isDateInToday:realDate])
                 tile.type = KalTileTypeToday;
             else
                 tile.type = KalTileTypeRegular;
@@ -89,7 +108,9 @@ extern const CGSize kTileSize;
         }
     }
 
-    _numWeeks = ceilf(tileNum / 7.f);
+    UInt8 weekdayCount = calendar.weekdaySymbols.count;
+    NSAssert1(weekdayCount > 0, @"Broken calendar.  Can't determine number of weekdays. Calendar = %@", calendar);
+    _numWeeks = ceilf(tileNum / weekdayCount);
     [self sizeToFit];
     [self setNeedsDisplay];
 }
@@ -98,7 +119,9 @@ extern const CGSize kTileSize;
 {
     [super drawRect:rect];
     CGContextRef ctx = UIGraphicsGetCurrentContext();
-    UIImage *image = [UIImage imageNamed:@"Kal.bundle/kal_tile.png"];
+    NSString *kalBundlePath = [[NSBundle mainBundle] pathForResource:@"Kal" ofType:@"bundle"];
+    NSBundle *bundle = [NSBundle bundleWithPath:kalBundlePath];
+    UIImage *image = [UIImage imageNamed:@"kal_tile" inBundle:bundle compatibleWithTraitCollection:self.traitCollection];
     if (image)
         CGContextDrawTiledImage(ctx, (CGRect){CGPointZero,kTileSize}, [image CGImage]);
 }
@@ -127,7 +150,7 @@ extern const CGSize kTileSize;
         return nil;
 
     KalTileView *tile = nil;
-    NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
+    NSCalendar *calendar = self.calendar;
 
     for (KalTileView *t in self.tiles)
     {
@@ -152,11 +175,30 @@ extern const CGSize kTileSize;
     self.height = 1.f + kTileSize.height * self.numWeeks;
 }
 
-- (void)markTilesForDates:(NSArray *)dates
+- (void)markTilesForDates:(NSArray<KalDate *> *)dates
 {
+    NSCalendar *calendar = self.calendar;
+    NSMutableOrderedSet<NSDate *> *datesToMark = [[NSMutableOrderedSet alloc] init];
+    for (KalDate *kalDate in dates)
+    {
+        NSDate *realDate = kalDate.NSDate;
+        if (!realDate)
+            continue;
+        NSDate *startOfDay = [calendar startOfDayForDate:realDate];
+        if (!startOfDay)
+            continue;
+        [datesToMark addObject:startOfDay];
+    }
+
     for (KalTileView *tile in self.tiles)
     {
-        tile.marked = [dates containsObject:tile.date];
+        NSDate *tileDate = tile.date.NSDate;
+        if (!tileDate)
+            continue;
+        NSDate *startOfDay = [calendar startOfDayForDate:tileDate];
+        if (!startOfDay)
+            continue;
+        tile.marked = [datesToMark containsObject:tileDate];
     }
 }
 

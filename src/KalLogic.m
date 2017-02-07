@@ -144,7 +144,4 @@
     self.toDate = [[to NSDate] cc_dateByMovingToEndOfDay];
 }
 
-#pragma mark -
-
-
 @end

@@ -8,12 +8,12 @@
 
 @implementation KalDate
 
-+ (KalDate *)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
++ (instancetype)dateForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
 {
     return [[KalDate alloc] initForDay:day month:month year:year];
 }
 
-+ (KalDate *)dateFromNSDate:(NSDate *)date
++ (instancetype)dateFromNSDate:(NSDate *)date
 {
 	if (!date || [[NSNull null] isEqual:date])
 		date = [NSDate date];
@@ -23,7 +23,7 @@
     return kalDate;
 }
 
-- (id)initForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
+- (instancetype)initForDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year
 {
     if ((self = [super init])) {
         _day = day;
