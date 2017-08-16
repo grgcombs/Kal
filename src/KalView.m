@@ -82,7 +82,7 @@ static const CGFloat kHeaderHeight = 44.f;
 {
     self = [super initWithFrame:frame];
 	[NSException raise:@"Incomplete initializer" format:@"KalView must be initialized with a delegate. Use the initWithFrame:delegate method."];
-	return nil;
+	return self;
 }
 
 - (void)redrawEntireMonth
@@ -198,9 +198,9 @@ static const CGFloat kHeaderHeight = 44.f;
     NSCalendar *calendar = self.calendar;
 
     NSArray *weekdayNames = calendar.shortWeekdaySymbols;
-    UInt8 weekdayCount = weekdayNames.count;
-	UInt8 firstWeekday = [calendar firstWeekday];
-	UInt8 i = firstWeekday - 1;
+    NSUInteger weekdayCount = weekdayNames.count;
+	NSUInteger firstWeekday = [calendar firstWeekday];
+	UInt8 i = (UInt8)firstWeekday - 1;
     UIFont *bold10 = [UIFont boldSystemFontOfSize:10.f];
     UIColor *textColor = [UIColor colorWithWhite:0.3f alpha:1.f];
 
@@ -209,7 +209,7 @@ static const CGFloat kHeaderHeight = 44.f;
     CGRect weekdayFrame = CGRectMake(0, yOffset, weekdayWidth, ceil(kHeaderHeight - titleHeight));
     //CGRect oldFrame = CGRectMake(xOffset, 30.f, 46.f, kHeaderHeight - 29.f);
 
-	for (CGFloat xOffset = 0.f; xOffset < CGRectGetWidth(headerBounds); xOffset += weekdayWidth, i = (i+1) % weekdayCount)
+    for (SInt16 xOffset = 0.f; xOffset < CGRectGetWidth(headerBounds); xOffset += weekdayWidth, i = (i+1) % weekdayCount)
     {
         weekdayFrame.origin.x = xOffset;
 		UILabel *dayLabel = [[UILabel alloc] initWithFrame:weekdayFrame];
@@ -333,7 +333,7 @@ static const CGFloat kHeaderHeight = 44.f;
 - (void)dealloc
 {
 	[[KalLogic sharedLogic] removeObserver:self forKeyPath:@"selectedMonthNameAndYear"];
-    KalGridView *gridView = self.gridView;
+//    KalGridView *gridView = self.gridView;
 //    if (gridView)
 //        [gridView removeObserver:self forKeyPath:@"frame"];
 }

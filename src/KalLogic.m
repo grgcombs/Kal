@@ -74,7 +74,7 @@
     [self moveToMonthForDate:[self.baseDate cc_dateByMovingToFirstDayOfTheFollowingMonth]];
 }
 
-- (NSString *)selectedMonthNameAndYear;
+- (NSString *)selectedMonthNameAndYear
 {
     return [monthAndYearFormatter stringFromDate:self.baseDate];
 }
